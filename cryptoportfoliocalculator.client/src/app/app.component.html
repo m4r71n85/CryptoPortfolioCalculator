@@ -1,0 +1,52 @@
+<div class="container">
+  <h1>Crypto Portfolio Calculator</h1>
+
+  <div class="file-upload" *ngIf="!isFileUploaded">
+    <input type="file" (change)="onFileSelected($event)" accept=".txt,.csv" #fileInput style="display: none;">
+    <button (click)="fileInput.click()">Select File</button>
+    <span *ngIf="selectedFile">{{ selectedFile.name }}</span><br/>
+    <button *ngIf="selectedFile" (click)="uploadFile()">Upload</button>
+    <p>Upload your portfolio file (format: X|COIN|Y)</p>
+    <span *ngIf="errorMessage" class="error-message">{{ errorMessage }}</span>
+  </div>
+
+  <div *ngIf="isFileUploaded" class="upload-success">
+    <p>File uploaded successfully!</p>
+  </div>
+
+  <div *ngIf="portfolioSummary">
+    <h2>Portfolio Summary</h2>
+    <p>Initial Portfolio Value: ${{ portfolioSummary.initialPortfolioValue | number:'1.2-2' }}</p>
+    <p>Current Portfolio Value: ${{ portfolioSummary.currentPortfolioValue | number:'1.2-2' }}</p>
+    <p>Overall Change: {{ portfolioSummary.overallChange | number:'1.2-2' }}%</p>
+    <p *ngIf="lastUpdated">Last Updated: {{ lastUpdated | date:'medium' }}</p>
+
+    <h3>Portfolio Details</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Coin</th>
+          <th>Amount</th>
+          <th>Initial Price</th>
+          <th>Current Price</th>
+          <th>Change</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let item of portfolioSummary.items">
+          <td>{{ item.coin }}</td>
+          <td>{{ item.amount }}</td>
+          <td>${{ item.initialPrice | number:'1.2-2' }}</td>
+          <td>${{ item.currentPrice | number:'1.2-2' }}</td>
+          <td>{{ item.change | number:'1.2-2' }}%</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="refresh-interval">
+      <label for="refreshInterval">Refresh Interval (minutes):</label>
+      <input type="number" id="refreshInterval" [value]="refreshInterval" (input)="onRefreshIntervalChange($event)"><br />
+      <button (click)="refreshPortfolio()" [disabled]="!isFileUploaded">Manually Refresh Portfolio</button>
+    </div>
+  </div>
+</div>
