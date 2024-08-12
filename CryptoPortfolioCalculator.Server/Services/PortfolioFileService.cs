@@ -2,6 +2,7 @@
 using System.Globalization;
 using Newtonsoft.Json;
 using CryptoPortfolioCalculator.Server.Exceptions;
+using Microsoft.AspNetCore.Http.Features;
 
 namespace CryptoPortfolioCalculator.Server.Services
 {
@@ -20,7 +21,7 @@ namespace CryptoPortfolioCalculator.Server.Services
         {
             try
             {
-                return contents.Split('\n')
+                List<PortfolioItem> items = contents.Split('\n')
                     .Where(line => !string.IsNullOrWhiteSpace(line))
                     .Select(line =>
                     {
@@ -33,6 +34,10 @@ namespace CryptoPortfolioCalculator.Server.Services
                         };
                     })
                     .ToList();
+
+                _logger.LogInformation("Parsed {Count} portfolio items", items.Count);
+
+                return items;
             }
             catch (Exception ex)
             {
@@ -47,6 +52,7 @@ namespace CryptoPortfolioCalculator.Server.Services
             try
             {
                 retrievedCoinData = await RetrieveCoindData(portfolioItems);
+                _logger.LogInformation("Retrieved data for {Count} coins", retrievedCoinData?.Data?.Length ?? 0);
 
             }
             catch (Exception ex)
@@ -74,14 +80,21 @@ namespace CryptoPortfolioCalculator.Server.Services
 
                 var initialValue = portfolioItems.Sum(item => item.Amount * item.InitialPrice);
                 var currentValue = portfolioItems.Sum(item => item.Amount * (item.CurrentPrice ?? item.InitialPrice));
+                var overallChange = ((currentValue - initialValue) / initialValue) * 100;
 
-                return new PortfolioSummary
+                var summary = new PortfolioSummary
                 {
                     Items = portfolioItems,
                     InitialPortfolioValue = initialValue,
                     CurrentPortfolioValue = currentValue,
-                    OverallChange = ((currentValue - initialValue) / initialValue) * 100
+                    OverallChange = overallChange
                 };
+
+                _logger.LogInformation("Calculated portfolio summary: Initial Value: {InitialValue}, Current Value: {CurrentValue}, Overall Change: {OverallChange}%",
+                    initialValue, currentValue, overallChange);
+
+                return summary;
+
             }
             catch (Exception ex)
             {
